@@ -1,3 +1,5 @@
+Download the latest version from [here](http://github.com/fagga/morningtea/raw/master/morningtea).
+
 ### What is it?
 
 It's basically the same as the Firefox extension [Morning
