@@ -9,7 +9,7 @@ $wday = 7 if($wday == 0);  # week starts with 1/monday and ends with 7/sunday
 
 open_browser();
 my $cmd = "firefox -new-tab '".join("' -new-tab '", read_urls($urlfile))."'";
-system($cmd);
+system($cmd." &");
 
 
 
@@ -35,6 +35,7 @@ sub open_browser {
     return if(-l $lockfile);
     system("firefox >/dev/null 2>&1 &");
     sleep(1) while(not -l $lockfile);
+    sleep(5);
 }
 
 
