@@ -1,0 +1,85 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $urlfile = $ENV{HOME}."/.morningtea";
+my $weekday = q/(?:mon|tue|wed|thu|fri|sat|sun)/;
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+my $wday_name = {0=>'sun', 1=>'mon', 2=>'tue', 3=>'wed', 4=>'thu', 5=>'fri', 6=>'sat'}->{$wday};
+
+open_browser();
+my $cmd = "firefox -new-tab '".join("' -new-tab '", read_urls($urlfile))."'";
+system($cmd);
+
+
+
+
+sub quit {
+    my $msg = shift;
+    print STDERR $msg."\n" if($msg);
+    exit($msg ? 0 : 1);
+}
+
+sub get_lockfile {
+    # find *actual* directory (like '1zxvjp5x.default')
+    my $dir = $ENV{HOME}."/.mozilla/firefox";
+	opendir(DIR, $dir) or quit("Can't open $dir: $!");
+	my @direntries = readdir(DIR) or quit("Can't read $dir: $!");
+    shift(@direntries) while($direntries[0] !~ /\w+\.default$/);
+    return $dir."/".$direntries[0]."/lock";
+}
+
+
+sub open_browser {
+    my $lockfile = get_lockfile();
+    return if(-l $lockfile);
+    system("firefox >/dev/null 2>&1 &");
+    sleep(1) while(not -l $lockfile);
+}
+
+
+sub read_urls {
+    my $urlfile = shift;
+    my $file_content = '';
+
+    open(F, "<$urlfile") or quit("Can't read URL list $urlfile: $!");
+    $file_content .= $_ while(<F>);
+    close(F);
+
+    my @urls;
+    while($file_content =~ /(\S+)\s*:\s*(\S+)/ig) {
+        push(@urls, $2) if(pattern_matches($1));
+    }
+    return @urls;
+}
+
+sub pattern_matches {
+    my $pattern = shift;
+
+    # every n'th day of the year/month/week
+    if($pattern =~ m~^(\d+-\d+|[\d,]+)/(y|m|w)$~) {
+        my ($wanted, $today) = ($1, {y=>$yday, m=>$mday, w=>$wday}->{$2});
+
+        if($wanted =~ /^(\d+)$/) {
+            return 1 if($today % $wanted == 0);
+        }
+
+        if($wanted =~ /^(\d+)-(\d+)$/) {
+            return 1 if($today > $1 and $today < $2);
+        }
+
+        if($wanted =~ /^[\d,]+$/) {
+            my @list = split(',', $wanted);
+            foreach my $wanted (@list) {
+                return 1 if($today == $wanted);
+            }
+        }
+    }
+
+    # certain days of the week
+    while($pattern =~ /($weekday)/gi) {
+        return 1 if(lc($1) eq $wday_name);
+    }
+
+    return 0;
+}
