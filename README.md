@@ -21,8 +21,7 @@ pairs of URLs and some kind of date pattern that defines when to open them.
 
 The first line in ~/.morningtea is called a single time when you start
 morningtea, meant to start the browser if it is not running. I use iceweasel,
-so mine looks like this:
-
+so mine looks like this:  
 `[ -h .mozilla/firefox/hite019y.default/lock ] || (iceweasel & sleep 10)`  
 If lock file exists, browser is already running; else run iceweasel in
 background, wait 10 seconds to give it time to come up, then return.
