@@ -2,54 +2,33 @@
 use strict;
 use warnings;
 
-my $urlfile = $ENV{HOME}."/.morningtea";
+my $config_file = $ARGV[0] || $ENV{HOME}."/.morningtea";
+open(F, "<$config_file") or die "Can't read file $config_file: $!";
+my @config = <F>;
+close(F);
+chomp(@config);  # remove trailing newlines
+
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 $wday = 7 if($wday == 0);  # week starts with 1/monday and ends with 7/sunday
 
+# start browser
+system(shift(@config));
 
-open_browser();
-my $cmd = "firefox -new-tab '".join("' -new-tab '", read_urls($urlfile))."'";
-system($cmd." &");
-
-
-
-
-sub quit {
-    my $msg = shift;
-    print STDERR $msg."\n" if($msg);
-    exit($msg ? 0 : 1);
-}
-
-sub get_lockfile {
-    # find *actual* directory (like '1zxvjp5x.default')
-    my $dir = $ENV{HOME}."/.mozilla/firefox";
-	opendir(DIR, $dir) or quit("Can't open $dir: $!");
-	my @direntries = readdir(DIR) or quit("Can't read $dir: $!");
-    shift(@direntries) while($direntries[0] !~ /\w+\.default$/);
-    return $dir."/".$direntries[0]."/lock";
-}
-
-
-sub open_browser {
-    my $lockfile = get_lockfile();
-    return if(-l $lockfile);
-    system("firefox >/dev/null 2>&1 &");
-    sleep(1) while(not -l $lockfile);
-    sleep(5);
+# open links
+my $url_cmd = shift(@config);
+foreach my $url (read_urls()) {
+    my $cmd = $url_cmd;
+    $cmd =~ s/%url/$url/g;
+    system($cmd);
 }
 
 
 sub read_urls {
-    my $urlfile = shift;
-    my $file_content = '';
-
-    open(F, "<$urlfile") or quit("Can't read URL list $urlfile: $!");
-    $file_content .= $_ while(<F>);
-    close(F);
-
     my @urls;
-    while($file_content =~ /(\S+)\s*:\s*(\S+)/ig) {
-        push(@urls, $2) if(pattern_matches($1));
+    foreach my $line (@config) {
+        if($line =~ /(\S+)\s*:\s*(\S+)/ig) {
+            push(@urls, $2) if(pattern_matches($1));
+        }
     }
     return @urls;
 }
