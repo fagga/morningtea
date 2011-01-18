@@ -9,12 +9,13 @@ close(F);
 chomp(@config);  # remove trailing newlines
 
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-$wday = 7 if($wday == 0);  # week starts with 1/monday and ends with 7/sunday
+$wday = 7 if($wday == 0);  # Week starts with 1 (monday) and ends with 7 (sunday)
+$yday++;                   # Day of year starts with 1, not 0
 
-# start browser
+# The first line of $config_file is a command to start the browser
 system(shift(@config));
 
-# open links
+# The second line is the command that opens a link
 my $url_cmd = shift(@config);
 foreach my $url (read_urls()) {
     my $cmd = $url_cmd;
@@ -36,20 +37,24 @@ sub read_urls {
 sub pattern_matches {
     my $pattern = shift;
 
-    # every n'th day of the year/month/week
-    if($pattern =~ m~^(\d+-\d+|[\d,]+)/(y|m|w)$~) {
-        my ($wanted, $today) = ($1, {y=>$yday, m=>$mday, w=>$wday}->{$2});
+    # Every n'th day
+    if($pattern =~ m~^(\d+)$~) {
+        my ($wanted, $days_since_epoch) = ($1, (sprintf "%d", time/86400));
+	return 1 if($days_since_epoch % $wanted == 0);
 
-        if($wanted =~ /^(\d+)$/) {
-            return 1 if($today % $wanted == 0);
-        }
+    }
 
-        if($wanted =~ /^(\d+)-(\d+)$/) {
-            return 1 if($today >= $1 and $today <= $2);
-        }
+    elsif($pattern =~ m~/(w|m|y)$~) {
+        my $today = {y=>$yday, m=>$mday, w=>$wday}->{$1};  # Amn’t I clever!
 
-        if($wanted =~ /^[\d,]+$/) {
-            my @list = split(',', $wanted);
+	# Day x to y of each week/month/year
+	if($pattern =~ m~^(\d+)-(\d+)/(w|m|y)$~) {
+	    return 1 if($today >= $1 and $today <= $2);
+	}
+
+	# List of days of each week/month/year
+        if($pattern =~ m~^([\d,]+)/(w|m|y)$~) {
+            my @list = split(',', $1);
             foreach my $wanted (@list) {
                 return 1 if($today == $wanted);
             }
