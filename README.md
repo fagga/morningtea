@@ -22,9 +22,9 @@ pairs of URLs and some kind of date pattern that defines when to open them.
 The first line in ~/.morningtea is called a single time when you start
 morningtea, meant to start the browser if it is not running. I use iceweasel,
 so mine looks like this:  
-`[ -h .mozilla/firefox/hite019y.default/lock ] || (iceweasel & sleep 10)`  
-If lock file exists, iceweasel is already running; else run iceweasel in
-background, wait 10 seconds to give it time to come up, then return.
+`[ -h .mozilla/firefox/*/lock ] || xtoolwait iceweasel`  
+If lock file exists, iceweasel is already running; else run iceweasel through
+xtoolwait to block until the browser window appears.
 
 The second line is the command that opens each URL. Again, mine:  
 `iceweasel -new-tab '%url'`  
@@ -52,10 +52,3 @@ That's pretty much it. Syntax is quite forgiving; you can put
 newlines/tabs/spaces wherever you want, except inside the URL and in the date
 pattern. Spaces in URLs can be replaced by `+` or `%20`.  
 Everything that doesn't fit into this pattern is ignored.
-
-
-### Bugs and Features
-
-Please drop me a message if you encounter bugs or miss a feature.  
-You can find my email address [here](http://github.com/fagga).
-
