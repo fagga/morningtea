@@ -40,19 +40,18 @@ sub pattern_matches {
     # Every n'th day
     if($pattern =~ m~^(\d+)$~) {
         my ($wanted, $days_since_epoch) = ($1, (sprintf "%d", time/86400));
-	return 1 if($days_since_epoch % $wanted == 0);
-
+        return 1 if($days_since_epoch % $wanted == 0);
     }
 
     elsif($pattern =~ m~/(w|m|y)$~) {
         my $today = {y=>$yday, m=>$mday, w=>$wday}->{$1};  # Amn’t I clever!
 
-	# Day x to y of each week/month/year
-	if($pattern =~ m~^(\d+)-(\d+)/(w|m|y)$~) {
-	    return 1 if($today >= $1 and $today <= $2);
-	}
+        # Day x to y of each week/month/year
+        if($pattern =~ m~^(\d+)-(\d+)/(w|m|y)$~) {
+            return 1 if($today >= $1 and $today <= $2);
+        }
 
-	# List of days of each week/month/year
+        # List of days of each week/month/year
         if($pattern =~ m~^([\d,]+)/(w|m|y)$~) {
             my @list = split(',', $1);
             foreach my $wanted (@list) {
